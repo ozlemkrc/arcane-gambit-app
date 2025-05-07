@@ -20,6 +20,7 @@ import androidx.navigation.navArgument
 import com.example.arcane_gambit.ui.screens.*
 import com.example.arcane_gambit.ui.theme.Arcane_gambitTheme
 import com.example.arcane_gambit.utils.SessionManager
+import java.util.UUID
 
 class MainActivity : ComponentActivity() {
     private lateinit var sessionManager: SessionManager
@@ -45,12 +46,12 @@ fun ArcaneGambitApp(sessionManager: SessionManager) {
     // Calculate start destination based on login state
     val startDestination = if (sessionManager.isLoggedIn()) "dashboard" else "home"
     
-    // Dummy character data
-    val dummyCharacters = listOf(
+    // Store characters in a mutable state list so we can add to it
+    var characters by remember { mutableStateOf(listOf(
         Character(id = "1", name = "Warrior", level = 5, strength = 10, agility = 4),
         Character(id = "2", name = "Mage", level = 3, strength = 8, agility = 6),
-        Character(id = "3", name = "Rogue", level = 4,strength = 3, agility = 5)
-    )
+        Character(id = "3", name = "Archer", level = 4, strength = 3, agility = 5)
+    )) }
 
     NavHost(
         navController = navController,
@@ -92,7 +93,7 @@ fun ArcaneGambitApp(sessionManager: SessionManager) {
             DashboardScreen(
                 navController = navController,
                 username = sessionManager.getUsername() ?: "Player",
-                characters = dummyCharacters,
+                characters = characters,
                 onCreateCharacterClick = { navController.navigate("create_character") },
                 onCharacterClick = { characterId -> 
                     navController.navigate("character_detail/$characterId") 
@@ -116,14 +117,32 @@ fun ArcaneGambitApp(sessionManager: SessionManager) {
         }
 
         composable("create_character") {
-            CreateCharacterScreen(
-                onSaveCharacter = { name, level ->
-                    // In a real app, save character via API
+            CharacterSelectionScreen(
+                onSaveCharacter = { name, stats ->
+                    // Create a new character from the stats and add to our list
+                    val newCharacter = Character(
+                        id = UUID.randomUUID().toString(),
+                        name = name,
+                        level = 1,
+                        strength = stats.attack / 2, // Convert attack to strength
+                        agility = stats.luck / 3  // Convert luck to agility
+                    )
+                    
+                    // Add the new character to our list
+                    characters = characters + newCharacter
+                    
+                    // Show a success toast
                     Toast.makeText(
                         navController.context,
-                        "Character Saved: $name (Level $level)",
+                        "Character Created: $name",
                         Toast.LENGTH_SHORT
                     ).show()
+                    
+                    // Navigate back to dashboard explicitly instead of using popBackStack
+                    navController.navigate("dashboard") {
+                        // Clear the back stack up to dashboard
+                        popUpTo("dashboard") { inclusive = false }
+                    }
                 },
                 onBack = { navController.popBackStack() }
             )
@@ -134,7 +153,7 @@ fun ArcaneGambitApp(sessionManager: SessionManager) {
             arguments = listOf(navArgument("characterId") { type = NavType.StringType })
         ) { backStackEntry ->
             val characterId = backStackEntry.arguments?.getString("characterId") ?: ""
-            val character = dummyCharacters.find { it.id == characterId }
+            val character = characters.find { it.id == characterId }
 
             if (character != null) {
                 CharacterPageScreen(
@@ -165,7 +184,7 @@ fun ArcaneGambitApp(sessionManager: SessionManager) {
             arguments = listOf(navArgument("characterId") { type = NavType.StringType })
         ) { backStackEntry ->
             val characterId = backStackEntry.arguments?.getString("characterId") ?: ""
-            val character = dummyCharacters.find { it.id == characterId } ?: dummyCharacters[0]
+            val character = characters.find { it.id == characterId } ?: characters[0]
             
             CharacterPageScreen(
                 character = character,
@@ -182,7 +201,7 @@ fun ArcaneGambitApp(sessionManager: SessionManager) {
             arguments = listOf(navArgument("characterId") { type = NavType.StringType })
         ) { backStackEntry ->
             val characterId = backStackEntry.arguments?.getString("characterId") ?: ""
-            val character = dummyCharacters.find { it.id == characterId } ?: dummyCharacters[0]
+            val character = characters.find { it.id == characterId } ?: characters[0]
             
             GamePlaceholderScreen(
                 character = character,

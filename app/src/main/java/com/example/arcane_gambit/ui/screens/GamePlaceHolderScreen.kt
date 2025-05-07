@@ -22,6 +22,12 @@ fun GamePlaceholderScreen(
     character: Character,
     onBackClick: () -> Unit
 ) {
+    // Calculate derived stats from character properties to match character creation stats
+    val attackValue = character.strength * 2
+    val defenceValue = (character.strength / 2) + (character.agility / 2) + 5
+    val luckValue = character.agility * 3
+    val vitalityValue = character.level * 5
+    
     Scaffold(
         topBar = {
             TopAppBar(
@@ -165,12 +171,15 @@ fun GamePlaceholderScreen(
                         
                         Divider(color = Color.White.copy(alpha = 0.2f))
                         
+                        // More compact layout with all stats in one row or a tighter grid
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            StatItem("STR", character.strength.toString(), Color(0xFFF44336))
-                            StatItem("AGI", character.agility.toString(), Color(0xFF2196F3))
+                            CompactStatItem("ATK", attackValue.toString(), Color(0xFFF44336))
+                            CompactStatItem("DEF", defenceValue.toString(), Color(0xFF2196F3))
+                            CompactStatItem("LUCK", luckValue.toString(), Color(0xFFFFEB3B))
+                            CompactStatItem("VIT", vitalityValue.toString(), Color(0xFF4CAF50))
                         }
                     }
                 }
@@ -202,6 +211,33 @@ fun StatItem(label: String, value: String, color: Color) {
                 color = color,
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp
+            )
+        }
+    }
+}
+
+@Composable
+fun CompactStatItem(label: String, value: String, color: Color) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp) // Reduced spacing for compactness
+    ) {
+        Text(
+            text = label,
+            fontSize = 12.sp, // Slightly smaller font size
+            color = Color.White.copy(alpha = 0.7f)
+        )
+        
+        Box(
+            modifier = Modifier
+                .background(color.copy(alpha = 0.15f), shape = RoundedCornerShape(4.dp)) // Reduced corner radius
+                .padding(horizontal = 8.dp, vertical = 4.dp) // Reduced padding
+        ) {
+            Text(
+                text = value,
+                color = color,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp // Slightly smaller font size
             )
         }
     }

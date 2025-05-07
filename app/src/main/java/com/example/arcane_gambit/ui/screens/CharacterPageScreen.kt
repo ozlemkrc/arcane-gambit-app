@@ -23,8 +23,14 @@ import androidx.compose.ui.unit.sp
 fun CharacterPageScreen(
     character: Character,
     onBackClick: () -> Unit,
-    onJoinGameClick: (Character) -> Unit // Add this parameter
+    onJoinGameClick: (Character) -> Unit
 ) {
+    // Calculate derived stats from character properties to match character creation stats
+    val attackValue = character.strength * 2
+    val defenceValue = (character.strength / 2) + (character.agility / 2) + 5
+    val luckValue = character.agility * 3
+    val vitalityValue = character.level * 5
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -54,16 +60,10 @@ fun CharacterPageScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .padding(16.dp),
+                    .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "Character Appearance",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.White
-                )
 
                 Box(
                     modifier = Modifier
@@ -111,9 +111,11 @@ fun CharacterPageScreen(
                         
                         Divider(color = Color.White.copy(alpha = 0.2f))
                         
-                        StatRow(label = "Level", value = character.level.toString(), color = Color(0xFF4CAF50))
-                        StatRow(label = "Strength", value = character.strength.toString(), color = Color(0xFFF44336))
-                        StatRow(label = "Agility", value = character.agility.toString(), color = Color(0xFF2196F3))
+                        // Use the same stat format as character creation screen
+                        StatProgressBar("Attack", attackValue)
+                        StatProgressBar("Defence", defenceValue)
+                        StatProgressBar("Luck", luckValue)
+                        StatProgressBar("Vitality", vitalityValue)
                     }
                 }
 
@@ -170,5 +172,65 @@ fun StatRow(label: String, value: String, color: Color) {
                 fontSize = 16.sp
             )
         }
+    }
+}
+
+@Composable
+fun StatProgressBar(name: String, value: Int) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = name,
+            color = Color.White,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium
+        )
+        
+        Row {
+            // Show stat bars like in character creation screen
+            // Maximum value is 25 (matches the slider in CreateCharacterScreen)
+            val maxBars = 10
+            val filledBars = (value.coerceAtMost(25) * maxBars / 25)
+            
+            for (i in 1..maxBars) {
+                Box(
+                    modifier = Modifier
+                        .size(width = 8.dp, height = 14.dp)
+                        .padding(horizontal = 1.dp)
+                        .background(
+                            color = if (i <= filledBars) 
+                                getColorForStat(name) 
+                            else 
+                                Color.Gray.copy(alpha = 0.3f),
+                            shape = RoundedCornerShape(2.dp)
+                        )
+                )
+            }
+            
+            Spacer(modifier = Modifier.width(8.dp))
+            
+            Text(
+                text = value.toString(),
+                color = getColorForStat(name),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+// Helper function to get color for different stats
+fun getColorForStat(statName: String): Color {
+    return when (statName) {
+        "Attack" -> Color(0xFFF44336)    // Red
+        "Defence" -> Color(0xFF2196F3)   // Blue
+        "Luck" -> Color(0xFFFFEB3B)      // Yellow
+        "Vitality" -> Color(0xFF4CAF50)  // Green
+        else -> Color.White
     }
 }
