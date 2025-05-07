@@ -47,7 +47,8 @@ fun DashboardScreen(
     onCreateCharacterClick: () -> Unit,
     onCharacterClick: (characterId: String) -> Unit,
     onSettingsClick: () -> Unit = { navController.navigate("account_settings") },
-    onLogoutClick: () -> Unit
+    onLogoutClick: () -> Unit,
+    onSpectateClick: () -> Unit = { navController.navigate("spectate") }
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -57,6 +58,11 @@ fun DashboardScreen(
             title = "Account Settings",
             icon = Icons.Outlined.Settings,
             onClick = onSettingsClick
+        ),
+        DrawerItem(
+            title = "Spectate Mode",
+            icon = Icons.Outlined.Visibility,
+            onClick = onSpectateClick
         ),
         DrawerItem(
             title = "Logout",
@@ -244,7 +250,7 @@ fun DashboardScreen(
                                             characterName = character.name,
                                             characterLevel = character.level,
                                             onClick = { 
-                                                // Use only the parent callback for navigation
+                                                // Only use the parent callback for navigation
                                                 onCharacterClick(character.id)
                                             }
                                         )

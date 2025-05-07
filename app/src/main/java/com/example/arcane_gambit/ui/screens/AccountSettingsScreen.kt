@@ -18,12 +18,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import androidx.compose.ui.draw.clip
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AccountSettingsScreen(
+    navController: NavController = rememberNavController(),
     onBackClick: () -> Unit,
     onLogoutClick: () -> Unit,
+    onSpectateClick: () -> Unit = { navController.navigate("spectate") },
     username: String = "Player"
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -31,12 +35,22 @@ fun AccountSettingsScreen(
 
     val drawerItems = listOf(
         DrawerItem(
-            title = "Character Menu", // Changed title from Account Settings to Character Menu
-            icon = Icons.Outlined.Settings,
+            title = "Character Menu",
+            icon = Icons.Outlined.Menu,
             onClick = {
                 scope.launch {
                     drawerState.close()
                     onBackClick() // Navigate back to Dashboard
+                }
+            }
+        ),
+        DrawerItem(
+            title = "Spectate Mode",
+            icon = Icons.Outlined.Visibility,
+            onClick = {
+                scope.launch {
+                    drawerState.close()
+                    onSpectateClick()
                 }
             }
         ),
@@ -102,12 +116,7 @@ fun AccountSettingsScreen(
                         icon = { Icon(item.icon, contentDescription = item.title) },
                         label = { Text(item.title) },
                         selected = false,
-                        onClick = {
-                            scope.launch {
-                                drawerState.close()
-                                item.onClick()
-                            }
-                        },
+                        onClick = item.onClick,
                         colors = NavigationDrawerItemDefaults.colors(
                             unselectedContainerColor = Color.Transparent,
                             unselectedIconColor = Color.White,
@@ -134,7 +143,7 @@ fun AccountSettingsScreen(
                     navigationIcon = {
                         IconButton(onClick = { scope.launch { drawerState.open() } }) {
                             Icon(
-                                imageVector = Icons.Default.Menu, // Changed to match DashboardScreen
+                                imageVector = Icons.Default.Menu,
                                 contentDescription = "Menu",
                                 tint = Color.White
                             )

@@ -89,6 +89,7 @@ fun ArcaneGambitApp(sessionManager: SessionManager) {
 
         composable("dashboard") {
             DashboardScreen(
+                navController = navController,
                 username = sessionManager.getUsername() ?: "Player",
                 characters = dummyCharacters,
                 onCreateCharacterClick = { navController.navigate("create_character") },
@@ -97,6 +98,9 @@ fun ArcaneGambitApp(sessionManager: SessionManager) {
                 },
                 onSettingsClick = {
                    navController.navigate("account_settings")
+                },
+                onSpectateClick = {
+                    navController.navigate("spectate")
                 },
                 onLogoutClick = {
                     // Log out and clear session
@@ -153,7 +157,11 @@ fun ArcaneGambitApp(sessionManager: SessionManager) {
 
         composable("account_settings") {
             AccountSettingsScreen(
+                navController = navController,
                 onBackClick = { navController.popBackStack() },
+                onSpectateClick = {
+                    navController.navigate("spectate")
+                },
                 onLogoutClick = {
                     // Log out and clear session
                     sessionManager.logout()
@@ -162,7 +170,8 @@ fun ArcaneGambitApp(sessionManager: SessionManager) {
                     navController.navigate("home") {
                         popUpTo("dashboard") { inclusive = true }
                     }
-                }
+                },
+                username = sessionManager.getUsername() ?: "Player"
             )
         }
     }
