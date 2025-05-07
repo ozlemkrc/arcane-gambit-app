@@ -6,7 +6,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -84,7 +83,9 @@ fun ArcaneGambitApp(sessionManager: SessionManager) {
         }
 
         composable("spectate") {
-            SpectatorScreen()
+            SpectatorScreen(
+                navController = navController
+            )
         }
 
         composable("dashboard") {
