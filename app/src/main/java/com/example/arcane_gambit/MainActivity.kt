@@ -138,7 +138,11 @@ fun ArcaneGambitApp(sessionManager: SessionManager) {
             if (character != null) {
                 CharacterPageScreen(
                     character = character,
-                    onBackClick = { navController.popBackStack() }
+                    onBackClick = { navController.popBackStack() },
+                    onJoinGameClick = { selectedCharacter ->
+                        // Navigate to the placeholder game screen with the character ID
+                        navController.navigate("game_placeholder/${selectedCharacter.id}")
+                    }
                 )
             } else {
                 // Handle the case where the character is not found
@@ -153,6 +157,36 @@ fun ArcaneGambitApp(sessionManager: SessionManager) {
                     )
                 }
             }
+        }
+
+        composable(
+            route = "character_page/{characterId}",
+            arguments = listOf(navArgument("characterId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val characterId = backStackEntry.arguments?.getString("characterId") ?: ""
+            val character = dummyCharacters.find { it.id == characterId } ?: dummyCharacters[0]
+            
+            CharacterPageScreen(
+                character = character,
+                onBackClick = { navController.popBackStack() },
+                onJoinGameClick = { selectedCharacter ->
+                    // Navigate to the placeholder game screen with the character ID
+                    navController.navigate("game_placeholder/${selectedCharacter.id}")
+                }
+            )
+        }
+
+        composable(
+            route = "game_placeholder/{characterId}",
+            arguments = listOf(navArgument("characterId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val characterId = backStackEntry.arguments?.getString("characterId") ?: ""
+            val character = dummyCharacters.find { it.id == characterId } ?: dummyCharacters[0]
+            
+            GamePlaceholderScreen(
+                character = character,
+                onBackClick = { navController.popBackStack() }
+            )
         }
 
         composable("account_settings") {

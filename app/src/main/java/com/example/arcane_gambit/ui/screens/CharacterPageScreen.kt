@@ -22,7 +22,8 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun CharacterPageScreen(
     character: Character,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onJoinGameClick: (Character) -> Unit // Add this parameter
 ) {
     Scaffold(
         topBar = {
@@ -117,6 +118,25 @@ fun CharacterPageScreen(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
+                
+                // Join Game Button
+                Button(
+                    onClick = { onJoinGameClick(character) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF4CAF50)
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = "JOIN GAME WITH ${character.name.uppercase()}",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
             }
         },
         containerColor = Color(0xFF1B1F3B)
