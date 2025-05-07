@@ -5,10 +5,14 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -42,6 +46,13 @@ fun ArcaneGambitApp(sessionManager: SessionManager) {
     // Calculate start destination based on login state
     val startDestination = if (sessionManager.isLoggedIn()) "dashboard" else "home"
     
+    // Dummy character data
+    val dummyCharacters = listOf(
+        Character(id = "1", name = "Warrior", level = 5),
+        Character(id = "2", name = "Mage", level = 3),
+        Character(id = "3", name = "Rogue", level = 4)
+    )
+
     NavHost(
         navController = navController,
         startDestination = startDestination
@@ -77,14 +88,6 @@ fun ArcaneGambitApp(sessionManager: SessionManager) {
         }
 
         composable("dashboard") {
-            val dummyCharacters = remember {
-                listOf(
-                    Character(id = "1", name = "Warrior", level = 5),
-                    Character(id = "2", name = "Mage", level = 3),
-                    Character(id = "3", name = "Rogue", level = 4)
-                )
-            }
-            
             DashboardScreen(
                 username = sessionManager.getUsername() ?: "Player",
                 characters = dummyCharacters,
@@ -93,12 +96,7 @@ fun ArcaneGambitApp(sessionManager: SessionManager) {
                     navController.navigate("character_detail/$characterId") 
                 },
                 onSettingsClick = {
-                    // TODO: Navigate to settings screen when implemented
-                    Toast.makeText(
-                        navController.context,
-                        "Settings coming soon",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                   navController.navigate("account_settings")
                 },
                 onLogoutClick = {
                     // Log out and clear session
@@ -131,8 +129,41 @@ fun ArcaneGambitApp(sessionManager: SessionManager) {
             arguments = listOf(navArgument("characterId") { type = NavType.StringType })
         ) { backStackEntry ->
             val characterId = backStackEntry.arguments?.getString("characterId") ?: ""
-            // For now just show character name
-            Text("Character Details for: $characterId")
+            val character = dummyCharacters.find { it.id == characterId }
+
+            if (character != null) {
+                CharacterPageScreen(
+                    character = character,
+                    onBackClick = { navController.popBackStack() }
+                )
+            } else {
+                // Handle the case where the character is not found
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Character not found",
+                        color = Color.White,
+                        fontSize = 18.sp
+                    )
+                }
+            }
+        }
+
+        composable("account_settings") {
+            AccountSettingsScreen(
+                onBackClick = { navController.popBackStack() },
+                onLogoutClick = {
+                    // Log out and clear session
+                    sessionManager.logout()
+
+                    // Navigate to home
+                    navController.navigate("home") {
+                        popUpTo("dashboard") { inclusive = true }
+                    }
+                }
+            )
         }
     }
 }

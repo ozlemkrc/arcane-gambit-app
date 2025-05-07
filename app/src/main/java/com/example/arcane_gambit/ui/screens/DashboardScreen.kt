@@ -23,6 +23,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 
 data class Character(
     val id: String,
@@ -39,11 +41,12 @@ data class DrawerItem(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
+    navController: NavController = rememberNavController(),
     username: String = "Player",
     characters: List<Character> = emptyList(),
     onCreateCharacterClick: () -> Unit,
     onCharacterClick: (characterId: String) -> Unit,
-    onSettingsClick: () -> Unit,
+    onSettingsClick: () -> Unit = { navController.navigate("account_settings") },
     onLogoutClick: () -> Unit
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -240,7 +243,10 @@ fun DashboardScreen(
                                         CharacterCard(
                                             characterName = character.name,
                                             characterLevel = character.level,
-                                            onClick = { onCharacterClick(character.id) }
+                                            onClick = { 
+                                                // Use only the parent callback for navigation
+                                                onCharacterClick(character.id)
+                                            }
                                         )
                                     }
                                 }
