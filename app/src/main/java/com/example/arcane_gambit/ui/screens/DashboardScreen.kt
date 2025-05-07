@@ -29,7 +29,9 @@ import androidx.navigation.compose.rememberNavController
 data class Character(
     val id: String,
     val name: String,
-    val level: Int
+    val level: Int,
+    val strength: Int,
+    val agility: Int
 )
 
 data class DrawerItem(

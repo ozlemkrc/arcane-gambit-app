@@ -48,9 +48,9 @@ fun ArcaneGambitApp(sessionManager: SessionManager) {
     
     // Dummy character data
     val dummyCharacters = listOf(
-        Character(id = "1", name = "Warrior", level = 5),
-        Character(id = "2", name = "Mage", level = 3),
-        Character(id = "3", name = "Rogue", level = 4)
+        Character(id = "1", name = "Warrior", level = 5, strength = 10, agility = 4),
+        Character(id = "2", name = "Mage", level = 3, strength = 8, agility = 6),
+        Character(id = "3", name = "Rogue", level = 4,strength = 3, agility = 5)
     )
 
     NavHost(

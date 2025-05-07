@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
@@ -56,36 +57,6 @@ fun CharacterPageScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(150.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFF6246EA)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = character.name.take(1).uppercase(),
-                        fontSize = 64.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                }
-
-                Text(
-                    text = character.name,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-
-                Text(
-                    text = "Level: ${character.level}",
-                    fontSize = 20.sp,
-                    color = Color.White
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
                 Text(
                     text = "Character Appearance",
                     fontSize = 18.sp,
@@ -106,8 +77,78 @@ fun CharacterPageScreen(
                         textAlign = TextAlign.Center
                     )
                 }
+
+                Text(
+                    text = character.name,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+
+                // Character Stats Section
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFF2A2F50)
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            text = "Character Stats",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        
+                        Divider(color = Color.White.copy(alpha = 0.2f))
+                        
+                        StatRow(label = "Level", value = character.level.toString(), color = Color(0xFF4CAF50))
+                        StatRow(label = "Strength", value = character.strength.toString(), color = Color(0xFFF44336))
+                        StatRow(label = "Agility", value = character.agility.toString(), color = Color(0xFF2196F3))
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
             }
         },
         containerColor = Color(0xFF1B1F3B)
     )
+}
+
+@Composable
+fun StatRow(label: String, value: String, color: Color) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            fontSize = 16.sp,
+            color = Color.White,
+            fontWeight = FontWeight.Medium
+        )
+        
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(12.dp))
+                .background(color.copy(alpha = 0.15f))
+                .padding(horizontal = 12.dp, vertical = 6.dp)
+        ) {
+            Text(
+                text = value,
+                color = color,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp
+            )
+        }
+    }
 }
