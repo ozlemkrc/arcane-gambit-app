@@ -26,7 +26,7 @@ fun LoginScreen(
     onRegisterClick: () -> Unit,
     onLoginSuccess: () -> Unit
 ) {
-    var username by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -65,11 +65,11 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Regular username/password login UI
+                // Regular email/password login UI
                 OutlinedTextField(
-                    value = username,
-                    onValueChange = { username = it },
-                    label = { Text("Username") },
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Email") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -105,8 +105,8 @@ fun LoginScreen(
 
                 Button(
                     onClick = {
-                        if (username.isBlank() || password.isBlank()) {
-                            errorMessage = "Username and password are required"
+                        if (email.isBlank() || password.isBlank()) {
+                            errorMessage = "Email and password are required"
                             return@Button
                         }
 
@@ -123,7 +123,7 @@ fun LoginScreen(
                             // Save session
                             sessionManager.createLoginSession(
                                 userId = mockUserId,
-                                username = username,
+                                username = email,
                                 token = "mock_token_${System.currentTimeMillis()}"
                             )
 

@@ -112,6 +112,10 @@ fun ArcaneGambitApp(sessionManager: SessionManager) {
                     navController.navigate("home") {
                         popUpTo("dashboard") { inclusive = true }
                     }
+                },
+                onCharactersDelete = { characterIds ->
+                    // Remove characters with the given IDs from the list
+                    characters = characters.filterNot { it.id in characterIds }
                 }
             )
         }

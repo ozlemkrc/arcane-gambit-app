@@ -25,7 +25,6 @@ import kotlinx.coroutines.launch
 fun RegisterScreen(
     onLoginClick: () -> Unit
 ) {
-    var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
@@ -67,24 +66,6 @@ fun RegisterScreen(
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
-
-                OutlinedTextField(
-                    value = username,
-                    onValueChange = { username = it },
-                    label = { Text("Username") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedBorderColor = Color.White,
-                        unfocusedBorderColor = Color.Gray,
-                        focusedLabelColor = Color.White,
-                        unfocusedLabelColor = Color.Gray
-                    )
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
 
                 OutlinedTextField(
                     value = email,
@@ -144,8 +125,33 @@ fun RegisterScreen(
 
                 Button(
                     onClick = {
-                        // Forward to DashboardScreen directly
-                        onLoginClick()
+                        if (email.isBlank() || password.isBlank() || confirmPassword.isBlank()) {
+                            errorMessage = "All fields are required"
+                            return@Button
+                        }
+                        if (password != confirmPassword) {
+                            errorMessage = "Passwords do not match"
+                            return@Button
+                        }
+                        isLoading = true
+                        errorMessage = null
+
+                        // Simulate registration process
+                        coroutineScope.launch {
+                            // Replace with actual registration logic
+                            // For example, call your ViewModel or repository method
+                            // val result = viewModel.register(email, password)
+
+                            // Simulating network delay
+                            kotlinx.coroutines.delay(2000)
+
+                            // On successful registration
+                            registrationSuccess = true
+                            isLoading = false
+
+                            // Optionally, navigate to another screen or show a success message
+                            // navController.navigate("login")
+                        }
                     },
                     modifier = Modifier
                         .fillMaxWidth()

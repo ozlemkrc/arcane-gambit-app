@@ -1,7 +1,12 @@
 package com.example.arcane_gambit.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -48,12 +53,17 @@ fun DashboardScreen(
     characters: List<Character> = emptyList(),
     onCreateCharacterClick: () -> Unit,
     onCharacterClick: (characterId: String) -> Unit,
+    onCharactersDelete: (List<String>) -> Unit,
     onSettingsClick: () -> Unit = { navController.navigate("account_settings") },
     onLogoutClick: () -> Unit,
     onSpectateClick: () -> Unit = { navController.navigate("spectate") }
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    
+    // Selection mode state
+    var selectionMode by remember { mutableStateOf(false) }
+    var selectedCharacterIds by remember { mutableStateOf(setOf<String>()) }
     
     val drawerItems = listOf(
         DrawerItem(
@@ -72,6 +82,21 @@ fun DashboardScreen(
             onClick = onLogoutClick
         )
     )
+
+    // Function to handle deletion of selected characters
+    fun deleteSelectedCharacters() {
+        if (selectedCharacterIds.isNotEmpty()) {
+            onCharactersDelete(selectedCharacterIds.toList())
+            selectedCharacterIds = emptySet()
+            selectionMode = false
+        }
+    }
+
+    // Function to exit selection mode
+    fun exitSelectionMode() {
+        selectionMode = false
+        selectedCharacterIds = emptySet()
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -172,36 +197,71 @@ fun DashboardScreen(
                     topBar = {
                         TopAppBar(
                             title = {
-                                Text(
-                                    text = "Arcane Gambit",
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold
-                                )
+                                if (selectionMode) {
+                                    Text(
+                                        text = "${selectedCharacterIds.size} Selected",
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                } else {
+                                    Text(
+                                        text = "Arcane Gambit",
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             },
                             colors = TopAppBarDefaults.topAppBarColors(
-                                containerColor = Color.Transparent
+                                containerColor = if (selectionMode) Color(0xFF6246EA) else Color.Transparent
                             ),
                             navigationIcon = {
-                                IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Menu,
-                                        contentDescription = "Menu",
-                                        tint = Color.White
-                                    )
+                                if (selectionMode) {
+                                    IconButton(onClick = { exitSelectionMode() }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = "Cancel Selection",
+                                            tint = Color.White
+                                        )
+                                    }
+                                } else {
+                                    IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Menu,
+                                            contentDescription = "Menu",
+                                            tint = Color.White
+                                        )
+                                    }
+                                }
+                            },
+                            actions = {
+                                AnimatedVisibility(
+                                    visible = selectionMode && selectedCharacterIds.isNotEmpty(),
+                                    enter = fadeIn(),
+                                    exit = fadeOut()
+                                ) {
+                                    IconButton(onClick = { deleteSelectedCharacters() }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Delete,
+                                            contentDescription = "Delete Selected",
+                                            tint = Color.White
+                                        )
+                                    }
                                 }
                             }
                         )
                     },
                     floatingActionButton = {
-                        FloatingActionButton(
-                            onClick = onCreateCharacterClick,
-                            containerColor = Color(0xFF6246EA)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "Create Character",
-                                tint = Color.White
-                            )
+                        if (!selectionMode) {
+                            FloatingActionButton(
+                                onClick = onCreateCharacterClick,
+                                containerColor = Color(0xFF6246EA)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = "Create Character",
+                                    tint = Color.White
+                                )
+                            }
                         }
                     },
                     content = { paddingValues ->
@@ -212,22 +272,43 @@ fun DashboardScreen(
                                 .padding(horizontal = 16.dp),
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            Text(
-                                text = "Welcome, $username",
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                textAlign = TextAlign.Start,
-                                modifier = Modifier.padding(top = 8.dp)
-                            )
+                            if (!selectionMode) {
+                                Text(
+                                    text = "Welcome",
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    textAlign = TextAlign.Start,
+                                    modifier = Modifier.padding(top = 8.dp)
+                                )
+                            }
 
-                            Text(
-                                text = "Your Characters",
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color.White,
-                                modifier = Modifier.padding(top = 8.dp)
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = if (selectionMode) 16.dp else 8.dp)
+                            ) {
+                                Text(
+                                    text = "Your Characters",
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color.White
+                                )
+                                
+                                if (!selectionMode && characters.isNotEmpty()) {
+                                    IconButton(
+                                        onClick = { selectionMode = true }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Edit,
+                                            contentDescription = "Select Characters",
+                                            tint = Color.White
+                                        )
+                                    }
+                                }
+                            }
 
                             if (characters.isEmpty()) {
                                 Box(
@@ -248,12 +329,29 @@ fun DashboardScreen(
                                     verticalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
                                     items(characters) { character ->
+                                        val isSelected = selectedCharacterIds.contains(character.id)
+                                        
                                         CharacterCard(
                                             characterName = character.name,
                                             characterLevel = character.level,
+                                            isSelected = isSelected,
+                                            selectionMode = selectionMode,
                                             onClick = { 
-                                                // Only use the parent callback for navigation
-                                                onCharacterClick(character.id)
+                                                if (selectionMode) {
+                                                    selectedCharacterIds = if (isSelected) {
+                                                        selectedCharacterIds - character.id
+                                                    } else {
+                                                        selectedCharacterIds + character.id
+                                                    }
+                                                } else {
+                                                    onCharacterClick(character.id)
+                                                }
+                                            },
+                                            onLongClick = {
+                                                if (!selectionMode) {
+                                                    selectionMode = true
+                                                    selectedCharacterIds = setOf(character.id)
+                                                }
                                             }
                                         )
                                     }
@@ -268,18 +366,31 @@ fun DashboardScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun CharacterCard(
     characterName: String,
     characterLevel: Int,
-    onClick: () -> Unit
+    isSelected: Boolean = false,
+    selectionMode: Boolean = false,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit
 ) {
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            ),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF2A2E5B))
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) 
+                Color(0xFF6246EA).copy(alpha = 0.6f) 
+            else 
+                Color(0xFF2A2E5B)
+        )
     ) {
         Row(
             modifier = Modifier
@@ -288,25 +399,44 @@ fun CharacterCard(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
-                Text(
-                    text = characterName,
-                    color = Color.White,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "Level: $characterLevel",
-                    color = Color.White,
-                    fontSize = 14.sp
-                )
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (selectionMode) {
+                    Checkbox(
+                        checked = isSelected,
+                        onCheckedChange = { onClick() },
+                        colors = CheckboxDefaults.colors(
+                            checkedColor = Color.White,
+                            uncheckedColor = Color.White.copy(alpha = 0.7f),
+                            checkmarkColor = Color(0xFF6246EA)
+                        ),
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                }
+                
+                Column {
+                    Text(
+                        text = characterName,
+                        color = Color.White,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Level: $characterLevel",
+                        color = Color.White,
+                        fontSize = 14.sp
+                    )
+                }
             }
             
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = "View Character",
-                tint = Color.White.copy(alpha = 0.5f)
-            )
+            if (!selectionMode) {
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = "View Character",
+                    tint = Color.White.copy(alpha = 0.5f)
+                )
+            }
         }
     }
 }
