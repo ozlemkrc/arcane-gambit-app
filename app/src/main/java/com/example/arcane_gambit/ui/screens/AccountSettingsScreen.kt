@@ -2,10 +2,9 @@ package com.example.arcane_gambit.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -13,17 +12,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import androidx.compose.ui.draw.clip
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-
-// Note: No DrawerItem class defined here - using the existing one from your codebase
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,7 +32,6 @@ fun AccountSettingsScreen(
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
-    val scrollState = rememberScrollState()
 
     val drawerItems = listOf(
         DrawerItem(
@@ -164,71 +159,26 @@ fun AccountSettingsScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues)
-                        .padding(16.dp)
-                        .verticalScroll(scrollState),
+                        .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     horizontalAlignment = Alignment.Start
                 ) {
-                    // Security Section
                     Text(
-                        text = "Security",
+                        text = "Change Password",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White
                     )
-
-                    // Password change with icon
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Lock,
-                            contentDescription = "Password",
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Change Password",
-                            fontSize = 16.sp,
-                            color = Color.White
-                        )
-                    }
-
                     Button(onClick = { /* Handle password change */ }) {
                         Text(text = "Update Password")
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Notifications Section
                     Text(
-                        text = "Notifications",
+                        text = "Manage Email Preferences",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White
                     )
-
-                    // Email preferences with icon
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Email,
-                            contentDescription = "Email",
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Manage Email Preferences",
-                            fontSize = 16.sp,
-                            color = Color.White
-                        )
-                    }
-
                     Button(onClick = { /* Handle email preferences */ }) {
                         Text(text = "Update Preferences")
                     }
