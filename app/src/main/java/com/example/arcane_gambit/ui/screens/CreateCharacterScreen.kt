@@ -343,10 +343,16 @@ fun CharacterEditScreen(
     onBack: () -> Unit
 ) {
     var characterName by remember { mutableStateOf(initialName.ifEmpty { "${characterClass.name} Hero" }) }
-    var attack by remember { mutableIntStateOf(characterClass.baseStats.attack) }
-    var defence by remember { mutableIntStateOf(characterClass.baseStats.defence) }
-    var luck by remember { mutableIntStateOf(characterClass.baseStats.luck) }
-    var vitality by remember { mutableIntStateOf(characterClass.baseStats.vitality) }
+    
+    // Base stats and points system
+    val baseStatValue = 10
+    var availablePoints by remember { mutableIntStateOf(8) }
+    
+    // Initialize stats with base values
+    var attack by remember { mutableIntStateOf(baseStatValue) }
+    var defence by remember { mutableIntStateOf(baseStatValue) }
+    var luck by remember { mutableIntStateOf(baseStatValue) }
+    var vitality by remember { mutableIntStateOf(baseStatValue) }
     
     val scrollState = rememberScrollState()
     
@@ -425,7 +431,38 @@ fun CharacterEditScreen(
         
         Spacer(modifier = Modifier.height(24.dp))
         
-        // Stats sliders
+        // Points info
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            shape = RoundedCornerShape(12.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = Color(0xFF3A3F6B),
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Available Points: $availablePoints",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                
+                Text(
+                    text = "Distribute points among your character's stats",
+                    fontSize = 14.sp,
+                    color = Color.LightGray,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+        }
+        
+        // Stats adjusters
         Text(
             text = "Customize Stats",
             fontSize = 18.sp,
@@ -436,32 +473,48 @@ fun CharacterEditScreen(
                 .padding(bottom = 8.dp)
         )
         
-        StatSlider(
+        StatAdjuster(
             label = "Attack",
             value = attack,
-            onValueChange = { attack = it },
-            baseValue = characterClass.baseStats.attack
+            baseValue = baseStatValue,
+            availablePoints = availablePoints,
+            onValueChange = { newValue, pointsDelta -> 
+                attack = newValue
+                availablePoints -= pointsDelta
+            }
         )
         
-        StatSlider(
+        StatAdjuster(
             label = "Defence",
             value = defence,
-            onValueChange = { defence = it },
-            baseValue = characterClass.baseStats.defence
+            baseValue = baseStatValue,
+            availablePoints = availablePoints,
+            onValueChange = { newValue, pointsDelta ->
+                defence = newValue
+                availablePoints -= pointsDelta
+            }
         )
         
-        StatSlider(
+        StatAdjuster(
             label = "Luck",
             value = luck,
-            onValueChange = { luck = it },
-            baseValue = characterClass.baseStats.luck
+            baseValue = baseStatValue,
+            availablePoints = availablePoints,
+            onValueChange = { newValue, pointsDelta ->
+                luck = newValue
+                availablePoints -= pointsDelta
+            }
         )
         
-        StatSlider(
+        StatAdjuster(
             label = "Vitality",
             value = vitality,
-            onValueChange = { vitality = it },
-            baseValue = characterClass.baseStats.vitality
+            baseValue = baseStatValue,
+            availablePoints = availablePoints,
+            onValueChange = { newValue, pointsDelta ->
+                vitality = newValue
+                availablePoints -= pointsDelta
+            }
         )
         
         Spacer(modifier = Modifier.height(32.dp))
@@ -493,54 +546,138 @@ fun CharacterEditScreen(
 }
 
 @Composable
-fun StatSlider(
+fun StatAdjuster(
     label: String,
     value: Int,
-    onValueChange: (Int) -> Unit,
-    baseValue: Int
+    baseValue: Int,
+    availablePoints: Int,
+    minValue: Int = 5,
+    maxValue: Int = 20,
+    onValueChange: (Int, Int) -> Unit // Returns new value and points delta
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
-        Row(
+        // Center the stat label
+        Box(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            contentAlignment = Alignment.Center
         ) {
             Text(
                 text = label,
-                color = Color.White,
-                fontSize = 16.sp
-            )
-            
-            Text(
-                text = value.toString(),
                 color = Color.White,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
         }
         
-        Slider(
-            value = value.toFloat(),
-            onValueChange = { onValueChange(it.toInt()) },
-            valueRange = 5f..25f,
-            steps = 19,
-            colors = SliderDefaults.colors(
-                thumbColor = Color.White,
-                activeTrackColor = Color(0xFF4A90E2),
-                inactiveTrackColor = Color.Gray
-            ),
-            modifier = Modifier.padding(top = 4.dp)
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Decrement button with minus icon
+            val canDecrement = value > minValue
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(
+                        color = if (canDecrement) Color(0xFF2A2E5B) else Color.Gray.copy(alpha = 0.5f),
+                        shape = CircleShape
+                    )
+                    .clickable(enabled = canDecrement) {
+                        if (canDecrement) {
+                            // Decreasing stats always gives +1 point
+                            onValueChange(value - 1, -1) 
+                        }
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "-",
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            
+            // Current value
+            Box(
+                modifier = Modifier
+                    .width(80.dp)
+                    .height(48.dp)
+                    .background(
+                        color = Color(0xFF3A3F6B),
+                        shape = RoundedCornerShape(8.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = value.toString(),
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            
+            // Increment button with plus icon
+            val canIncrement = value < maxValue && availablePoints > 0
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(
+                        color = if (canIncrement) Color(0xFF2A2E5B) else Color.Gray.copy(alpha = 0.5f),
+                        shape = CircleShape
+                    )
+                    .clickable(enabled = canIncrement) { 
+                        if (canIncrement) {
+                            // Increasing stats always costs 1 point
+                            onValueChange(value + 1, 1) 
+                        }
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "+",
+                    color = Color.White,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
         
-        Text(
-            text = "Base Value: $baseValue",
-            color = Color.Gray,
-            fontSize = 12.sp,
-            modifier = Modifier.align(Alignment.End)
-        )
+        // Show stat bars
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            for (i in 1..10) {
+                val filled = i <= value / 2
+                val isBaseStatBar = i <= baseValue / 2
+                
+                val barColor = when {
+                    filled && value > baseValue -> Color(0xFF4CAF50)  // Green for above base stats
+                    filled && value < baseValue -> Color(0xFFE57373)  // Red for below base stats
+                    filled -> Color(0xFF4A90E2)  // Blue for base stats
+                    else -> Color.Gray.copy(alpha = 0.3f)  // Empty bar
+                }
+                
+                Box(
+                    modifier = Modifier
+                        .size(width = 16.dp, height = 8.dp)
+                        .padding(horizontal = 1.dp)
+                        .background(
+                            color = barColor,
+                            shape = RoundedCornerShape(2.dp)
+                        )
+                )
+            }
+        }
     }
 }
