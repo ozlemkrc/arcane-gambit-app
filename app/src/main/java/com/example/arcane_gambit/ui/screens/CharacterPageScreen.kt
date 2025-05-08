@@ -1,9 +1,11 @@
 package com.example.arcane_gambit.ui.screens
 
-import androidx.compose.animation.core.animateDpAsState
+import com.example.arcane_gambit.R
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -18,6 +20,24 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+// Map of character names to drawable resource IDs
+fun getCharacterImageResId(characterName: String): Int? {
+    // Create a map to manually link character names to drawable resource IDs
+    // Explicitly specify the map's key-value types
+    val characterImages: Map<String, Int> = mapOf(
+        "warrior" to R.drawable.warrior, // Correct key-value pair
+        "mage" to R.drawable.mage, // Correct key-value pair
+      "archer" to R.drawable.archer, // Correct key-value pair
+
+    )
+
+
+    // Format character name to match the keys in the map
+    val imageName = characterName.lowercase().replace(" ", "_")
+
+    // Return the drawable resource ID if found, or null if not found
+    return characterImages[imageName]
+}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CharacterPageScreen(
@@ -25,11 +45,14 @@ fun CharacterPageScreen(
     onBackClick: () -> Unit,
     onJoinGameClick: (Character) -> Unit
 ) {
-    // Calculate derived stats from character properties to match character creation stats
+    // Derived stats calculations
     val attackValue = character.strength * 2
     val defenceValue = (character.strength / 2) + (character.agility / 2) + 5
     val luckValue = character.agility * 3
     val vitalityValue = character.level * 5
+
+    // Get the image resource ID based on the character's name
+    val imageResId = getCharacterImageResId(character.name)
 
     Scaffold(
         topBar = {
@@ -65,20 +88,31 @@ fun CharacterPageScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
+                // Box with blue background and image
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp)
-                        .background(Color.Gray.copy(alpha = 0.5f)),
+                        .height(250.dp)
+                        .background(Color(0xFF1B1F3B)), // Set box background to blue
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "Appearance Placeholder",
-                        color = Color.White.copy(alpha = 0.7f),
-                        textAlign = TextAlign.Center
-                    )
+                    if (imageResId != null) {
+                        Image(
+                            painter = painterResource(id = imageResId),
+                            contentDescription = "Character Image",
+                            modifier = Modifier.fillMaxSize(), // Fill the box size
+                            contentScale = ContentScale.Fit // Ensure the image fits without cropping
+                        )
+                    } else {
+                        Text(
+                            text = "Appearance Placeholder",
+                            color = Color.White.copy(alpha = 0.7f),
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
 
+                // Character Name Text
                 Text(
                     text = character.name,
                     fontSize = 28.sp,
@@ -108,10 +142,9 @@ fun CharacterPageScreen(
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
-                        
+
                         Divider(color = Color.White.copy(alpha = 0.2f))
-                        
-                        // Use the same stat format as character creation screen
+
                         StatProgressBar("Attack", attackValue)
                         StatProgressBar("Defence", defenceValue)
                         StatProgressBar("Luck", luckValue)
@@ -120,7 +153,7 @@ fun CharacterPageScreen(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 // Join Game Button
                 Button(
                     onClick = { onJoinGameClick(character) },
@@ -141,9 +174,11 @@ fun CharacterPageScreen(
                 }
             }
         },
-        containerColor = Color(0xFF1B1F3B)
+        containerColor = Color(0xFF1B1F3B) // Set the background color for the entire screen
     )
 }
+
+
 
 @Composable
 fun StatRow(label: String, value: String, color: Color) {
