@@ -1,19 +1,15 @@
 package com.example.arcane_gambit.utils
 
-import android.nfc.FormatException
 import android.nfc.NdefMessage
 import android.nfc.NdefRecord
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.Ndef
 import android.nfc.tech.NdefFormatable
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import com.example.arcane_gambit.ui.screens.Character
 import org.json.JSONObject
-import java.io.IOException
 import java.nio.charset.Charset
-import java.util.Arrays
 
 /**
  * Utility class for handling NFC operations
