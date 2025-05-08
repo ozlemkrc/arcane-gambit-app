@@ -1,6 +1,7 @@
 package com.example.arcane_gambit.ui.screens
 
 import com.example.arcane_gambit.R
+import com.example.arcane_gambit.ui.screens.Character
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
@@ -45,14 +46,8 @@ fun CharacterPageScreen(
     onBackClick: () -> Unit,
     onJoinGameClick: (Character) -> Unit
 ) {
-    // Derived stats calculations
-    val attackValue = character.strength * 2
-    val defenceValue = (character.strength / 2) + (character.agility / 2) + 5
-    val luckValue = character.agility * 3
-    val vitalityValue = character.level * 5
-
-    // Get the image resource ID based on the character's name
-    val imageResId = getCharacterImageResId(character.name)
+    // Get the image resource ID based on the character's avatar
+    val imageResId = getCharacterImageResId(character.avatar)
 
     Scaffold(
         topBar = {
@@ -93,15 +88,15 @@ fun CharacterPageScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(250.dp)
-                        .background(Color(0xFF1B1F3B)), // Set box background to blue
+                        .background(Color(0xFF1B1F3B)),
                     contentAlignment = Alignment.Center
                 ) {
                     if (imageResId != null) {
                         Image(
                             painter = painterResource(id = imageResId),
                             contentDescription = "Character Image",
-                            modifier = Modifier.fillMaxSize(), // Fill the box size
-                            contentScale = ContentScale.Fit // Ensure the image fits without cropping
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Fit
                         )
                     } else {
                         Text(
@@ -145,10 +140,10 @@ fun CharacterPageScreen(
 
                         Divider(color = Color.White.copy(alpha = 0.2f))
 
-                        StatProgressBar("Attack", attackValue)
-                        StatProgressBar("Defence", defenceValue)
-                        StatProgressBar("Luck", luckValue)
-                        StatProgressBar("Vitality", vitalityValue)
+                        StatProgressBar("Attack", character.attack)
+                        StatProgressBar("Defence", character.defence)
+                        StatProgressBar("Luck", character.luck)
+                        StatProgressBar("Vitality", character.vitality)
                     }
                 }
 
@@ -174,7 +169,7 @@ fun CharacterPageScreen(
                 }
             }
         },
-        containerColor = Color(0xFF1B1F3B) // Set the background color for the entire screen
+        containerColor = Color(0xFF1B1F3B)
     )
 }
 

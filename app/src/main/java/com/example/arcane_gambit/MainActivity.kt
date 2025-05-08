@@ -109,11 +109,7 @@ class MainActivity : ComponentActivity() {
     private fun processNfcIntent(intent: Intent) {
         // Read NDEF messages from the NFC tag if available
         when (intent.action) {
-            NfcAdapter.ACTION_NDEF_DISCOVERED -> {
-                handleNdefMessage(intent)
-            }
             NfcAdapter.ACTION_TECH_DISCOVERED, NfcAdapter.ACTION_TAG_DISCOVERED -> {
-                // We have a tag, but no NDEF message, so we'll create one from the current character
                 val tag = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     intent.getParcelableExtra(NfcAdapter.EXTRA_TAG, Tag::class.java)
                 } else {
@@ -126,29 +122,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    private fun handleNdefMessage(intent: Intent) {
-        val rawMessages = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES, Parcelable::class.java)
-        } else {
-            @Suppress("DEPRECATION")
-            intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES)
-        }
-
-        if (rawMessages != null) {
-            val messages = rawMessages.map { it as NdefMessage }
-            for (message in messages) {
-                // Use NFCUtil to extract character data
-                val character = NFCUtil.extractCharacterFromNdefMessage(message)
-                if (character != null) {
-                    // Handle the received character
-                    onNfcDetected(character)
-                    return
-                }
-            }
-        }
-        Toast.makeText(this, "No valid character data found", Toast.LENGTH_SHORT).show()
     }
 
     private fun sendCharacterToGameStation(tag: Tag) {
@@ -173,7 +146,11 @@ class MainActivity : ComponentActivity() {
 
     private fun onNfcDetected(character: Character) {
         // Handle the character joining the game
-        Toast.makeText(this, "Character ${character.name} is ready to join the game!", Toast.LENGTH_SHORT).show()
+        Toast.makeText(
+            this,
+            "Character ${character.name} (${character.classType}) is ready to join the game!",
+            Toast.LENGTH_SHORT
+        ).show()
 
         // In a real app, you would now communicate with the game engine
         // or start a game activity with this character
@@ -191,11 +168,42 @@ fun ArcaneGambitApp(
     val startDestination = if (sessionManager.isLoggedIn()) "dashboard" else "home"
 
     // Store characters in a mutable state list so we can add to it
-    var characters by remember { mutableStateOf(listOf(
-        Character(id = "1", name = "Warrior", level = 5, strength = 10, agility = 4),
-        Character(id = "2", name = "Mage", level = 3, strength = 8, agility = 6),
-        Character(id = "3", name = "Archer", level = 4, strength = 3, agility = 5)
-    )) }
+    var characters by remember {
+        mutableStateOf(
+            listOf(
+                Character(
+                    id = "1",
+                    name = "HelloKitty",
+                    classType = "Warrior",
+                    avatar = "warrior", // Updated to match the expected format
+                    luck = 5,
+                    attack = 10,
+                    defence = 8,
+                    vitality = 12
+                ),
+                Character(
+                    id = "2",
+                    name = "Grandpa",
+                    classType = "Mage",
+                    avatar = "mage", // Updated to match the expected format
+                    luck = 7,
+                    attack = 12,
+                    defence = 4,
+                    vitality = 6
+                ),
+                Character(
+                    id = "3",
+                    name = "Assasin",
+                    classType = "Archer",
+                    avatar = "archer", // Updated to match the expected format
+                    luck = 6,
+                    attack = 8,
+                    defence = 5,
+                    vitality = 7
+                )
+            )
+        )
+    }
 
     NavHost(
         navController = navController,
@@ -265,23 +273,14 @@ fun ArcaneGambitApp(
 
         composable("create_character") {
             CharacterSelectionScreen(
-                onSaveCharacter = { name, stats ->
-                    // Create a new character from the stats and add to our list
-                    val newCharacter = Character(
-                        id = UUID.randomUUID().toString(),
-                        name = name,
-                        level = 1,
-                        strength = stats.attack / 2, // Convert attack to strength
-                        agility = stats.luck / 3  // Convert luck to agility
-                    )
-
+                onSaveCharacter = { newCharacter ->
                     // Add the new character to our list
                     characters = characters + newCharacter
 
                     // Show a success toast
                     Toast.makeText(
                         navController.context,
-                        "Character Created: $name",
+                        "Character Created: ${newCharacter.name}",
                         Toast.LENGTH_SHORT
                     ).show()
 

@@ -34,11 +34,11 @@ fun GamePlaceholderScreen(
     val isNfcSupported = remember { nfcAdapter != null }
     val isNfcEnabled = remember { nfcAdapter?.isEnabled == true }
 
-    // Calculate derived stats from character properties to match character creation stats
-    val attackValue = character.strength * 2
-    val defenceValue = (character.strength / 2) + (character.agility / 2) + 5
-    val luckValue = character.agility * 3
-    val vitalityValue = character.level * 5
+    // Update derived stats calculation to match the new Character class
+    val attackValue = character.attack
+    val defenceValue = character.defence
+    val luckValue = character.luck
+    val vitalityValue = character.vitality
 
     // Simulate NFC detection for UI preview if needed
     // This would typically be triggered by the MainActivity's NFC handling
@@ -107,12 +107,6 @@ fun GamePlaceholderScreen(
                             color = Color.White
                         )
 
-                        Text(
-                            text = "Level ${character.level} Character",
-                            fontSize = 16.sp,
-                            color = Color(0xFF4CAF50),
-                            fontWeight = FontWeight.Medium
-                        )
 
                         Text(
                             text = if (isNfcSupported && isNfcEnabled) "Ready to join game"

@@ -72,6 +72,8 @@ import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.HorizontalPagerIndicator
 import com.google.accompanist.pager.rememberPagerState
+import com.example.arcane_gambit.ui.screens.Character
+import java.util.UUID
 
 data class CharacterClass(
     val name: String,
@@ -90,7 +92,7 @@ data class CharacterStats(
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun CharacterSelectionScreen(
-    onSaveCharacter: (String, CharacterStats) -> Unit,
+    onSaveCharacter: (Character) -> Unit,
     onBack: () -> Unit
 ) {
     val backgroundGradient = Brush.verticalGradient(
@@ -209,7 +211,17 @@ fun CharacterSelectionScreen(
                         initialName = characterName,
                         onNameChange = { characterName = it },
                         onSave = { name, stats ->
-                            onSaveCharacter(name, stats)
+                            val newCharacter = Character(
+                                id = UUID.randomUUID().toString(),
+                                name = name,
+                                classType = characterClasses[selectedClassIndex].name,
+                                avatar = characterClasses[selectedClassIndex].name.lowercase(),
+                                attack = stats.attack,
+                                defence = stats.defence,
+                                luck = stats.luck,
+                                vitality = stats.vitality
+                            )
+                            onSaveCharacter(newCharacter)
                             onBack()
                         },
                         onBack = { isEditMode = false }

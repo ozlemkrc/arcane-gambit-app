@@ -32,14 +32,10 @@ object NFCUtil {
         val json = JSONObject().apply {
             put("id", character.id)
             put("name", character.name)
-            put("level", character.level)
-            put("strength", character.strength)
-            put("agility", character.agility)
-            // Derived stats
-            put("attack", character.strength * 2)
-            put("defence", (character.strength / 2) + (character.agility / 2) + 5)
-            put("luck", character.agility * 3)
-            put("vitality", character.level * 5)
+            put("attack", character.attack)
+            put("defence", (character.defence))
+            put("luck", character.luck)
+            put("vitality", character.vitality)
         }
 
         val jsonString = json.toString()
@@ -55,32 +51,6 @@ object NFCUtil {
 
         // Return the NDEF message with both records
         return NdefMessage(arrayOf(mimeRecord, appRecord))
-    }
-
-    /**
-     * Extracts a Character object from an NDEF message
-     */
-    fun extractCharacterFromNdefMessage(message: NdefMessage): Character? {
-        for (record in message.records) {
-            if (String(record.type) == "application/com.example.arcane_gambit") {
-                val payload = record.payload
-                val characterJson = String(payload, Charset.forName("UTF-8"))
-
-                try {
-                    val json = JSONObject(characterJson)
-                    return Character(
-                        id = json.getString("id"),
-                        name = json.getString("name"),
-                        level = json.getInt("level"),
-                        strength = json.getInt("strength"),
-                        agility = json.getInt("agility")
-                    )
-                } catch (e: Exception) {
-                    return null
-                }
-            }
-        }
-        return null
     }
 
     /**

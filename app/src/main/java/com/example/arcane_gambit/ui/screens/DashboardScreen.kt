@@ -32,16 +32,9 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import androidx.compose.foundation.interaction.MutableInteractionSource import androidx.compose.material.ripple.rememberRipple
-
-
-data class Character(
-    val id: String,
-    val name: String,
-    val level: Int,
-    val strength: Int,
-    val agility: Int
-)
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.material.ripple.rememberRipple
+import com.example.arcane_gambit.ui.screens.Character
 
 data class DrawerItem(
     val title: String,
@@ -336,8 +329,7 @@ fun DashboardScreen(
                                         val isSelected = selectedCharacterIds.contains(character.id)
                                         
                                         CharacterCard(
-                                            characterName = character.name,
-                                            characterLevel = character.level,
+                                            character = character,
                                             isSelected = isSelected,
                                             selectionMode = selectionMode,
                                             onClick = { 
@@ -373,8 +365,7 @@ fun DashboardScreen(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun CharacterCard(
-    characterName: String,
-    characterLevel: Int,
+    character: Character,
     isSelected: Boolean = false,
     selectionMode: Boolean = false,
     onClick: () -> Unit,
@@ -385,7 +376,7 @@ fun CharacterCard(
         targetValue = if (isSelected) 8.dp else 2.dp,
         label = "CardElevation"
     )
-    
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -397,7 +388,6 @@ fun CharacterCard(
             ),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            // Use a single solid color for selected state instead of transparency
             containerColor = if (isSelected) 
                 Color(0xFF4A3D96) // Darker purple for selected cards
             else 
@@ -410,7 +400,7 @@ fun CharacterCard(
                 .fillMaxWidth()
                 .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically // Align content to the center vertically
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically
@@ -427,22 +417,25 @@ fun CharacterCard(
                         modifier = Modifier.padding(end = 8.dp)
                     )
                 }
-                
-                Column {
+
+                // Add the character's class type under their name
+                Column(
+                    verticalArrangement = Arrangement.Center // Center the text vertically
+                ) {
                     Text(
-                        text = characterName,
+                        text = character.name,
                         color = Color.White,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Level: $characterLevel",
-                        color = Color.White,
+                        text = character.classType, // Display the class type
+                        color = Color.White.copy(alpha = 0.7f),
                         fontSize = 14.sp
                     )
                 }
             }
-            
+
             if (!selectionMode) {
                 Icon(
                     imageVector = Icons.Default.ChevronRight,
