@@ -135,7 +135,10 @@ fun LoginScreen(
                         .fillMaxWidth()
                         .height(56.dp)
                         .clip(RoundedCornerShape(12.dp)),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2A2E5B))
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF2A2E5B),
+                        contentColor = Color.White  // This will make text and icon white
+                    )
                 ) {
                     Icon(Icons.Filled.Login, contentDescription = "Login", tint = Color.White)
                     Spacer(modifier = Modifier.width(8.dp))
