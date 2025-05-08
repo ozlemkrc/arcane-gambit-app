@@ -60,8 +60,7 @@ fun ArcaneGambitApp(sessionManager: SessionManager) {
         composable("home") {
             HomeScreen(
                 onLoginClick = { navController.navigate("login") },
-                onRegisterClick = { navController.navigate("register") },
-                onSpectateClick = { navController.navigate("spectate") }
+                onRegisterClick = { navController.navigate("register") }
             )
         }
 

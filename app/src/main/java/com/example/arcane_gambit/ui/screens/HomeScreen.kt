@@ -22,7 +22,6 @@ import androidx.compose.ui.unit.sp
 fun HomeScreen(
     onLoginClick: () -> Unit,
     onRegisterClick: () -> Unit,
-    onSpectateClick: () -> Unit
 ) {
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -82,20 +81,7 @@ fun HomeScreen(
                     Text("Register")
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Button(
-                    onClick = onSpectateClick,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2A2E5B))
-                ) {
-                    Icon(Icons.Filled.Visibility, contentDescription = "Spectate", tint = Color.White)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Spectate Game")
-                }
+                
             }
         }
     }
