@@ -1,5 +1,7 @@
 package com.example.arcane_gambit
 
+import android.content.Intent
+import android.nfc.NfcAdapter
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -37,15 +39,40 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-}
 
+    // Handle new NFC intents
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+
+        // Store the new intent (important for NFC handling)
+        setIntent(intent)
+
+        // Forward the intent to the active screen that needs it
+        val nfcHandler = window.decorView.getTag(android.R.id.content) as? ((Intent) -> Unit)
+        nfcHandler?.invoke(intent)
+    }
+
+    // Handle NFC when activity resumes
+    override fun onResume() {
+        super.onResume()
+
+        // If this activity was started by an NFC intent, process it
+        if (intent != null && intent.action != null &&
+            (intent.action == NfcAdapter.ACTION_NDEF_DISCOVERED ||
+                    intent.action == NfcAdapter.ACTION_TAG_DISCOVERED)) {
+
+            // Forward the intent to current screen
+            onNewIntent(intent)
+        }
+    }
+}
 @Composable
 fun ArcaneGambitApp(sessionManager: SessionManager) {
     val navController = rememberNavController()
 
     // Calculate start destination based on login state
     val startDestination = if (sessionManager.isLoggedIn()) "dashboard" else "home"
-    
+
     // Store characters in a mutable state list so we can add to it
     var characters by remember { mutableStateOf(listOf(
         Character(id = "1", name = "Warrior", level = 5, strength = 10, agility = 4),
@@ -94,8 +121,8 @@ fun ArcaneGambitApp(sessionManager: SessionManager) {
                 username = sessionManager.getUsername() ?: "Player",
                 characters = characters,
                 onCreateCharacterClick = { navController.navigate("create_character") },
-                onCharacterClick = { characterId -> 
-                    navController.navigate("character_detail/$characterId") 
+                onCharacterClick = { characterId ->
+                    navController.navigate("character_detail/$characterId")
                 },
                 onSettingsClick = {
                    navController.navigate("account_settings")
@@ -130,17 +157,17 @@ fun ArcaneGambitApp(sessionManager: SessionManager) {
                         strength = stats.attack / 2, // Convert attack to strength
                         agility = stats.luck / 3  // Convert luck to agility
                     )
-                    
+
                     // Add the new character to our list
                     characters = characters + newCharacter
-                    
+
                     // Show a success toast
                     Toast.makeText(
                         navController.context,
                         "Character Created: $name",
                         Toast.LENGTH_SHORT
                     ).show()
-                    
+
                     // Navigate back to dashboard explicitly instead of using popBackStack
                     navController.navigate("dashboard") {
                         // Clear the back stack up to dashboard
@@ -188,7 +215,7 @@ fun ArcaneGambitApp(sessionManager: SessionManager) {
         ) { backStackEntry ->
             val characterId = backStackEntry.arguments?.getString("characterId") ?: ""
             val character = characters.find { it.id == characterId } ?: characters[0]
-            
+
             CharacterPageScreen(
                 character = character,
                 onBackClick = { navController.popBackStack() },
@@ -205,7 +232,7 @@ fun ArcaneGambitApp(sessionManager: SessionManager) {
         ) { backStackEntry ->
             val characterId = backStackEntry.arguments?.getString("characterId") ?: ""
             val character = characters.find { it.id == characterId } ?: characters[0]
-            
+
             GamePlaceholderScreen(
                 character = character,
                 onBackClick = { navController.popBackStack() }
