@@ -1,5 +1,6 @@
 package com.example.arcane_gambit.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.fadeIn
@@ -19,6 +20,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -30,6 +32,8 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.foundation.interaction.MutableInteractionSource import androidx.compose.material.ripple.rememberRipple
+
 
 data class Character(
     val id: String,
@@ -65,6 +69,17 @@ fun DashboardScreen(
     var selectionMode by remember { mutableStateOf(false) }
     var selectedCharacterIds by remember { mutableStateOf(setOf<String>()) }
     
+    // Function to exit selection mode
+    fun exitSelectionMode() {
+        selectionMode = false
+        selectedCharacterIds = emptySet()
+    }
+    
+    // Handle back button press
+    BackHandler(enabled = selectionMode) {
+        exitSelectionMode()
+    }
+    
     val drawerItems = listOf(
         DrawerItem(
             title = "Account Settings",
@@ -90,12 +105,6 @@ fun DashboardScreen(
             selectedCharacterIds = emptySet()
             selectionMode = false
         }
-    }
-
-    // Function to exit selection mode
-    fun exitSelectionMode() {
-        selectionMode = false
-        selectedCharacterIds = emptySet()
     }
 
     Surface(
@@ -197,40 +206,30 @@ fun DashboardScreen(
                     topBar = {
                         TopAppBar(
                             title = {
-                                if (selectionMode) {
-                                    Text(
-                                        text = "${selectedCharacterIds.size} Selected",
-                                        color = Color.White,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                } else {
-                                    Text(
-                                        text = "Arcane Gambit",
-                                        color = Color.White,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
+                                Text(
+                                    text = if (selectionMode) "${selectedCharacterIds.size} Selected" else "Arcane Gambit",
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold
+                                )
                             },
                             colors = TopAppBarDefaults.topAppBarColors(
-                                containerColor = if (selectionMode) Color(0xFF6246EA) else Color.Transparent
+                                containerColor = Color.Transparent // Keep the same color in both modes
                             ),
                             navigationIcon = {
-                                if (selectionMode) {
-                                    IconButton(onClick = { exitSelectionMode() }) {
-                                        Icon(
-                                            imageVector = Icons.Default.Close,
-                                            contentDescription = "Cancel Selection",
-                                            tint = Color.White
-                                        )
+                                IconButton(
+                                    onClick = {
+                                        if (selectionMode) {
+                                            exitSelectionMode()
+                                        } else {
+                                            scope.launch { drawerState.open() }
+                                        }
                                     }
-                                } else {
-                                    IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                        Icon(
-                                            imageVector = Icons.Default.Menu,
-                                            contentDescription = "Menu",
-                                            tint = Color.White
-                                        )
-                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = if (selectionMode) Icons.Default.ArrowBack else Icons.Default.Menu,
+                                        contentDescription = if (selectionMode) "Cancel Selection" else "Menu",
+                                        tint = Color.White
+                                    )
                                 }
                             },
                             actions = {
@@ -251,7 +250,11 @@ fun DashboardScreen(
                         )
                     },
                     floatingActionButton = {
-                        if (!selectionMode) {
+                        AnimatedVisibility(
+                            visible = !selectionMode,
+                            enter = fadeIn(),
+                            exit = fadeOut()
+                        ) {
                             FloatingActionButton(
                                 onClick = onCreateCharacterClick,
                                 containerColor = Color(0xFF6246EA)
@@ -272,23 +275,22 @@ fun DashboardScreen(
                                 .padding(horizontal = 16.dp),
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            if (!selectionMode) {
-                                Text(
-                                    text = "Welcome",
-                                    fontSize = 24.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White,
-                                    textAlign = TextAlign.Start,
-                                    modifier = Modifier.padding(top = 8.dp)
-                                )
-                            }
+                            // Always show the welcome message but with alpha control
+                            Text(
+                                text = "Welcome",
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                textAlign = TextAlign.Start,
+                                modifier = Modifier
+                                    .padding(top = 8.dp)
+                                    .alpha(if (selectionMode) 0.0f else 1.0f)
+                            )
 
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = if (selectionMode) 16.dp else 8.dp)
+                                modifier = Modifier.fillMaxWidth()
                             ) {
                                 Text(
                                     text = "Your Characters",
@@ -297,7 +299,9 @@ fun DashboardScreen(
                                     color = Color.White
                                 )
                                 
-                                if (!selectionMode && characters.isNotEmpty()) {
+                                AnimatedVisibility(
+                                    visible = !selectionMode && characters.isNotEmpty()
+                                ) {
                                     IconButton(
                                         onClick = { selectionMode = true }
                                     ) {
@@ -376,21 +380,30 @@ fun CharacterCard(
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val elevation = animateDpAsState(
+        targetValue = if (isSelected) 8.dp else 2.dp,
+        label = "CardElevation"
+    )
+    
     Card(
-        onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
             .combinedClickable(
+                interactionSource = interactionSource,
+                indication = rememberRipple(),
                 onClick = onClick,
                 onLongClick = onLongClick
             ),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
+            // Use a single solid color for selected state instead of transparency
             containerColor = if (isSelected) 
-                Color(0xFF6246EA).copy(alpha = 0.6f) 
+                Color(0xFF4A3D96) // Darker purple for selected cards
             else 
-                Color(0xFF2A2E5B)
-        )
+                Color(0xFF2A2E5B) // Original card color
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = elevation.value)
     ) {
         Row(
             modifier = Modifier
