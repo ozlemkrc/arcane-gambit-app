@@ -19,6 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.arcane_gambit.utils.SessionManager
+import com.example.arcane_gambit.data.repository.AuthRepository
 import kotlinx.coroutines.launch
 
 @Composable
@@ -30,10 +31,10 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
+    val authRepository = remember { AuthRepository() }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -112,23 +113,30 @@ fun LoginScreen(
 
                         isLoading = true
                         errorMessage = null
-
                         coroutineScope.launch {
-                            // Simulate a successful login without backend verification
-                            kotlinx.coroutines.delay(1000) // Simulate network delay
-
-                            // Mock data for successful login
-                            val mockUserId = "user_123"
-
-                            // Save session
-                            sessionManager.createLoginSession(
-                                userId = mockUserId,
-                                username = email,
-                                token = "mock_token_${System.currentTimeMillis()}"
-                            )
-
-                            isLoading = false
-                            onLoginSuccess()
+                            try {
+                                val result = authRepository.login(email, password)
+                                result.fold(
+                                    onSuccess = { authResponse ->
+                                        // Save session with the received token
+                                        sessionManager.createLoginSession(
+                                            userId = "user_${System.currentTimeMillis()}", // Server doesn't return user ID
+                                            username = email,
+                                            token = authResponse.token
+                                        )
+                                        
+                                        isLoading = false
+                                        onLoginSuccess()
+                                    },
+                                    onFailure = { exception ->
+                                        isLoading = false
+                                        errorMessage = exception.message ?: "Login failed"
+                                    }
+                                )
+                            } catch (e: Exception) {
+                                isLoading = false
+                                errorMessage = "Network error: ${e.message}"
+                            }
                         }
                     },
                     modifier = Modifier

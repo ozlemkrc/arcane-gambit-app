@@ -20,6 +20,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -28,6 +30,7 @@ import androidx.navigation.navArgument
 import com.example.arcane_gambit.ui.screens.*
 import com.example.arcane_gambit.ui.theme.Arcane_gambitTheme
 import com.example.arcane_gambit.utils.SessionManager
+import com.example.arcane_gambit.viewmodel.CharacterViewModel
 
 import java.util.UUID
 
@@ -163,46 +166,32 @@ fun ArcaneGambitApp(
     onSelectCharacterForNfc: (Character) -> Unit
 ) {
     val navController = rememberNavController()
+    val characterViewModel: CharacterViewModel = viewModel()
+    
+    // Collect state from ViewModel
+    val characters by characterViewModel.characters.collectAsStateWithLifecycle()
+    val isLoading by characterViewModel.isLoading.collectAsStateWithLifecycle()
+    val error by characterViewModel.error.collectAsStateWithLifecycle()
 
     // Calculate start destination based on login state
     val startDestination = if (sessionManager.isLoggedIn()) "dashboard" else "home"
-
-    // Store characters in a mutable state list so we can add to it
-    var characters by remember {
-        mutableStateOf(
-            listOf(
-                Character(
-                    id = "1",
-                    name = "HelloKitty",
-                    classType = "Warrior",
-                    avatar = "warrior", // Updated to match the expected format
-                    luck = 5,
-                    attack = 10,
-                    defence = 8,
-                    vitality = 12
-                ),
-                Character(
-                    id = "2",
-                    name = "Grandpa",
-                    classType = "Mage",
-                    avatar = "mage", // Updated to match the expected format
-                    luck = 7,
-                    attack = 12,
-                    defence = 4,
-                    vitality = 6
-                ),
-                Character(
-                    id = "3",
-                    name = "Assasin",
-                    classType = "Archer",
-                    avatar = "archer", // Updated to match the expected format
-                    luck = 6,
-                    attack = 8,
-                    defence = 5,
-                    vitality = 7
-                )
-            )
-        )
+    
+    // Load characters when logged in
+    LaunchedEffect(sessionManager.isLoggedIn()) {
+        if (sessionManager.isLoggedIn()) {
+            val token = sessionManager.getToken()
+            if (token != null) {
+                characterViewModel.loadCharacters(token)
+            }
+        }
+    }
+    
+    // Show error messages
+    error?.let { errorMessage ->
+        LaunchedEffect(errorMessage) {
+            // You can show a Toast or Snackbar here
+            characterViewModel.clearError()
+        }
     }
 
     NavHost(
@@ -233,72 +222,94 @@ fun ArcaneGambitApp(
                 onLoginClick = { navController.navigate("login") }
             )
         }
-
         composable("spectate") {
             SpectatorScreen(
                 navController = navController
             )
         }
-
+        
         composable("dashboard") {
-            DashboardScreen(
-                navController = navController,
-                username = sessionManager.getUsername() ?: "Player",
-                characters = characters,
-                onCreateCharacterClick = { navController.navigate("create_character") },
-                onCharacterClick = { characterId ->
-                    navController.navigate("character_detail/$characterId")
-                },
-                onSettingsClick = {
-                    navController.navigate("account_settings")
-                },
-                onSpectateClick = {
-                    navController.navigate("spectate")
-                },
-                onLogoutClick = {
-                    // Log out and clear session
-                    sessionManager.logout()
+            val token = sessionManager.getToken()
+            if (token != null) {
+                DashboardScreen(
+                    navController = navController,
+                    username = sessionManager.getUsername() ?: "Player",
+                    characterViewModel = characterViewModel,
+                    token = token,
+                    onCreateCharacterClick = { navController.navigate("create_character") },
+                    onCharacterClick = { characterId ->
+                        navController.navigate("character_detail/$characterId")
+                    },
+                    onSettingsClick = {
+                        navController.navigate("account_settings")
+                    },
+                    onSpectateClick = {
+                        navController.navigate("spectate")
+                    },
+                    onLogoutClick = {
+                        // Log out and clear session
+                        sessionManager.logout()
 
-                    // Navigate to home
-                    navController.navigate("home") {
+                        // Navigate to home
+                        navController.navigate("home") {
+                            popUpTo("dashboard") { inclusive = true }
+                        }
+                    }
+                )
+            } else {
+                // Token is null, redirect to login
+                LaunchedEffect(Unit) {
+                    navController.navigate("login") {
                         popUpTo("dashboard") { inclusive = true }
                     }
-                },
-                onCharactersDelete = { characterIds ->
-                    // Remove characters with the given IDs from the list
-                    characters = characters.filterNot { it.id in characterIds }
-                }
-            )
+                }            }
         }
-
+        
         composable("create_character") {
             CharacterSelectionScreen(
                 onSaveCharacter = { newCharacter ->
-                    // Add the new character to our list
-                    characters = characters + newCharacter
+                    // Create character using ViewModel
+                    val token = sessionManager.getToken()
+                    if (token != null) {
+                        characterViewModel.createCharacter(
+                            token = token,
+                            character = newCharacter,
+                            onSuccess = {
+                                // Show a success toast
+                                Toast.makeText(
+                                    navController.context,
+                                    "Character Created: ${newCharacter.name}",
+                                    Toast.LENGTH_SHORT
+                                ).show()
 
-                    // Show a success toast
-                    Toast.makeText(
-                        navController.context,
-                        "Character Created: ${newCharacter.name}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-
-                    // Navigate back to dashboard explicitly instead of using popBackStack
-                    navController.navigate("dashboard") {
-                        // Clear the back stack up to dashboard
-                        popUpTo("dashboard") { inclusive = false }
-                    }
-                },
+                                // Navigate back to dashboard
+                                navController.navigate("dashboard") {
+                                    popUpTo("dashboard") { inclusive = false }
+                                }
+                            }
+                        )
+                    } else {
+                        Toast.makeText(
+                            navController.context,
+                            "Authentication error. Please login again.",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        
+                        // Navigate to login
+                        navController.navigate("login") {
+                            popUpTo("dashboard") { inclusive = true }
+                        }
+                    }                },
                 onBack = { navController.popBackStack() }
             )
         }
-
+        
         composable(
             route = "character_detail/{characterId}",
             arguments = listOf(navArgument("characterId") { type = NavType.StringType })
         ) { backStackEntry ->
             val characterId = backStackEntry.arguments?.getString("characterId") ?: ""
+            val characters by characterViewModel.characters.collectAsStateWithLifecycle()
             val character = characters.find { it.id == characterId }
 
             if (character != null) {
@@ -327,25 +338,39 @@ fun ArcaneGambitApp(
                 }
             }
         }
-
         composable(
             route = "character_page/{characterId}",
             arguments = listOf(navArgument("characterId") { type = NavType.StringType })
         ) { backStackEntry ->
             val characterId = backStackEntry.arguments?.getString("characterId") ?: ""
-            val character = characters.find { it.id == characterId } ?: characters[0]
+            val characters by characterViewModel.characters.collectAsStateWithLifecycle()
+            val character = characters.find { it.id == characterId } ?: characters.firstOrNull()
+            
+            if (character != null) {
+                CharacterPageScreen(
+                    character = character,
+                    onBackClick = { navController.popBackStack() },
+                    onJoinGameClick = { selectedCharacter ->
+                        // Set the character for NFC transmission
+                        onSelectCharacterForNfc(selectedCharacter)
 
-            CharacterPageScreen(
-                character = character,
-                onBackClick = { navController.popBackStack() },
-                onJoinGameClick = { selectedCharacter ->
-                    // Set the character for NFC transmission
-                    onSelectCharacterForNfc(selectedCharacter)
-
-                    // Navigate to the placeholder game screen with the character ID
-                    navController.navigate("game_placeholder/${selectedCharacter.id}")
+                        // Navigate to the placeholder game screen with the character ID
+                        navController.navigate("game_placeholder/${selectedCharacter.id}")
+                    }
+                )
+            } else {
+                // Handle the case where no characters exist
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No characters found",
+                        color = Color.White,
+                        fontSize = 18.sp
+                    )
                 }
-            )
+            }
         }
 
         composable(
@@ -353,23 +378,37 @@ fun ArcaneGambitApp(
             arguments = listOf(navArgument("characterId") { type = NavType.StringType })
         ) { backStackEntry ->
             val characterId = backStackEntry.arguments?.getString("characterId") ?: ""
-            val character = characters.find { it.id == characterId } ?: characters[0]
+            val characters by characterViewModel.characters.collectAsStateWithLifecycle()
+            val character = characters.find { it.id == characterId } ?: characters.firstOrNull()
 
-            GamePlaceholderScreen(
-                character = character,
-                onBackClick = { navController.popBackStack() },
-                onNfcDetected = { detectedCharacter ->
-                    // Handle the NFC detected callback
-                    Toast.makeText(
-                        navController.context,
-                        "NFC detected: ${detectedCharacter.name}",
-                        Toast.LENGTH_SHORT
-                    ).show()
+            if (character != null) {
+                GamePlaceholderScreen(
+                    character = character,
+                    onBackClick = { navController.popBackStack() },
+                    onNfcDetected = { detectedCharacter ->
+                        // Handle the NFC detected callback
+                        Toast.makeText(
+                            navController.context,
+                            "NFC detected: ${detectedCharacter.name}",
+                            Toast.LENGTH_SHORT
+                        ).show()
 
-                    // In a real app, this would be where you'd start the game or
-                    // send the character data to the game engine
+                        // In a real app, this would be where you'd start the game or
+                        // send the character data to the game engine
+                    }
+                )
+            } else {
+                // Handle the case where no characters exist
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {                    Text(
+                        text = "Character not found",
+                        color = Color.White,
+                        fontSize = 18.sp
+                    )
                 }
-            )
+            }
         }
 
         composable("account_settings") {

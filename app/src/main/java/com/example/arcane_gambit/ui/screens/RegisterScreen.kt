@@ -19,6 +19,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.arcane_gambit.utils.SessionManager
+import com.example.arcane_gambit.data.repository.AuthRepository
 import kotlinx.coroutines.launch
 
 @Composable
@@ -32,10 +33,10 @@ fun RegisterScreen(
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var registrationSuccess by remember { mutableStateOf(false) }
-
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
+    val authRepository = remember { AuthRepository() }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -134,23 +135,35 @@ fun RegisterScreen(
                             return@Button
                         }
                         isLoading = true
-                        errorMessage = null
-
-                        // Simulate registration process
+                        errorMessage = null                        // Simulate registration process
                         coroutineScope.launch {
-                            // Replace with actual registration logic
-                            // For example, call your ViewModel or repository method
-                            // val result = viewModel.register(email, password)
-
-                            // Simulating network delay
-                            kotlinx.coroutines.delay(2000)
-
-                            // On successful registration
-                            registrationSuccess = true
-                            isLoading = false
-
-                            // Optionally, navigate to another screen or show a success message
-                            // navController.navigate("login")
+                            try {
+                                val result = authRepository.register(email, password)
+                                result.fold(
+                                    onSuccess = { authResponse ->
+                                        // Save session with the received token
+                                        sessionManager.createLoginSession(
+                                            userId = "user_${System.currentTimeMillis()}", // Server doesn't return user ID
+                                            username = email,
+                                            token = authResponse.token
+                                        )
+                                        
+                                        registrationSuccess = true
+                                        isLoading = false
+                                        
+                                        // Navigate to login after a short delay
+                                        kotlinx.coroutines.delay(1500)
+                                        onLoginClick()
+                                    },
+                                    onFailure = { exception ->
+                                        isLoading = false
+                                        errorMessage = exception.message ?: "Registration failed"
+                                    }
+                                )
+                            } catch (e: Exception) {
+                                isLoading = false
+                                errorMessage = "Network error: ${e.message}"
+                            }
                         }
                     },
                     modifier = Modifier

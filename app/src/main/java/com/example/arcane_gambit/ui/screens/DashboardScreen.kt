@@ -33,8 +33,9 @@ import kotlinx.coroutines.launch
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.material.ripple.rememberRipple
 import com.example.arcane_gambit.ui.screens.Character
+import com.example.arcane_gambit.viewmodel.CharacterViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 data class DrawerItem(
     val title: String,
@@ -47,16 +48,34 @@ data class DrawerItem(
 fun DashboardScreen(
     navController: NavController = rememberNavController(),
     username: String = "Player",
-    characters: List<Character> = emptyList(),
+    characterViewModel: CharacterViewModel,
+    token: String,
     onCreateCharacterClick: () -> Unit,
     onCharacterClick: (characterId: String) -> Unit,
-    onCharactersDelete: (List<String>) -> Unit,
     onSettingsClick: () -> Unit = { navController.navigate("account_settings") },
     onLogoutClick: () -> Unit,
     onSpectateClick: () -> Unit = { navController.navigate("spectate") }
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    
+    // Collect ViewModel states
+    val characters by characterViewModel.characters.collectAsStateWithLifecycle()
+    val isLoading by characterViewModel.isLoading.collectAsStateWithLifecycle()
+    val error by characterViewModel.error.collectAsStateWithLifecycle()
+    
+    // Load characters when the composable is first launched
+    LaunchedEffect(token) {
+        characterViewModel.loadCharacters(token)
+    }
+    
+    // Handle errors
+    error?.let { errorMessage ->
+        LaunchedEffect(errorMessage) {
+            // Show error snackbar or handle error
+            characterViewModel.clearError()
+        }
+    }
     
     // Selection mode state
     var selectionMode by remember { mutableStateOf(false) }
@@ -94,7 +113,7 @@ fun DashboardScreen(
     // Function to handle deletion of selected characters
     fun deleteSelectedCharacters() {
         if (selectedCharacterIds.isNotEmpty()) {
-            onCharactersDelete(selectedCharacterIds.toList())
+            characterViewModel.deleteCharacters(token, selectedCharacterIds.toList())
             selectedCharacterIds = emptySet()
             selectionMode = false
         }
@@ -259,8 +278,7 @@ fun DashboardScreen(
                                 )
                             }
                         }
-                    },
-                    content = { paddingValues ->
+                    },                    content = { paddingValues ->
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -293,7 +311,7 @@ fun DashboardScreen(
                                 )
                                 
                                 AnimatedVisibility(
-                                    visible = !selectionMode && characters.isNotEmpty()
+                                    visible = !selectionMode && characters.isNotEmpty() && !isLoading
                                 ) {
                                     IconButton(
                                         onClick = { selectionMode = true }
@@ -307,18 +325,115 @@ fun DashboardScreen(
                                 }
                             }
 
-                            if (characters.isEmpty()) {
+                            // Show loading indicator
+                            if (isLoading) {
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .height(200.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    Text(
-                                        text = "No characters yet. Create one to get started!",
-                                        color = Color.White.copy(alpha = 0.7f),
-                                        textAlign = TextAlign.Center
-                                    )
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                                    ) {
+                                        CircularProgressIndicator(
+                                            color = Color(0xFF6246EA),
+                                            modifier = Modifier.size(48.dp)
+                                        )
+                                        Text(
+                                            text = "Loading characters...",
+                                            color = Color.White.copy(alpha = 0.7f),
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+                                }
+                            }
+                            // Show error message
+                            else if (error != null) {
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 8.dp),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = Color(0xFF6B2737)
+                                    ),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.ErrorOutline,
+                                            contentDescription = "Error",
+                                            tint = Color.White,
+                                            modifier = Modifier.size(48.dp)
+                                        )
+                                        
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        
+                                        Text(
+                                            text = "Failed to load characters",
+                                            color = Color.White,
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        
+                                        Text(
+                                            text = error ?: "Unknown error",
+                                            color = Color.White.copy(alpha = 0.8f),
+                                            fontSize = 14.sp,
+                                            textAlign = TextAlign.Center,
+                                            modifier = Modifier.padding(top = 4.dp)
+                                        )
+                                        
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        
+                                        Button(
+                                            onClick = { characterViewModel.loadCharacters(token) },
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = Color(0xFF6246EA)
+                                            )
+                                        ) {
+                                            Text("Retry", color = Color.White)
+                                        }
+                                    }
+                                }
+                            }
+                            // Show empty state or character list
+                            else if (characters.isEmpty()) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(200.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Person,
+                                            contentDescription = "No Characters",
+                                            tint = Color.White.copy(alpha = 0.4f),
+                                            modifier = Modifier.size(64.dp)
+                                        )
+                                        Text(
+                                            text = "No characters yet",
+                                            color = Color.White.copy(alpha = 0.7f),
+                                            fontSize = 18.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                        Text(
+                                            text = "Create one to get started!",
+                                            color = Color.White.copy(alpha = 0.5f),
+                                            fontSize = 14.sp,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
                                 }
                             } else {
                                 LazyColumn(
@@ -376,13 +491,12 @@ fun CharacterCard(
         targetValue = if (isSelected) 8.dp else 2.dp,
         label = "CardElevation"
     )
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .combinedClickable(
                 interactionSource = interactionSource,
-                indication = rememberRipple(),
+                indication = null,
                 onClick = onClick,
                 onLongClick = onLongClick
             ),
