@@ -125,14 +125,12 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    private fun sendCharacterToGameStation(tag: Tag) {
+    }    private fun sendCharacterToGameStation(tag: Tag) {
         // Get the current character that we want to send
         val character = currentCharacter
         if (character != null) {
-            // Use our NFCUtil to write the character to the tag
-            val success = NFCUtil.writeCharacterToTag(tag, character)
+            // Use our NFCUtil to write the character to the tag with activity context
+            val success = NFCUtil.writeCharacterToTag(tag, character, this)
 
             if (success) {
                 // Handle successful write

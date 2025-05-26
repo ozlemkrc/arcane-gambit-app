@@ -12,11 +12,17 @@ import org.json.JSONObject
 import java.nio.charset.Charset
 
 /**
+ * Data class for character data read from NFC
+ */
+data class NfcCharacterData(
+    val characterId: String,
+    val userToken: String
+)
+
+/**
  * Utility class for handling NFC operations
  */
-object NFCUtil {
-
-    /**
+object NFCUtil {    /**
      * Checks if NFC is available and enabled
      */
     fun isNfcAvailable(activity: ComponentActivity): Boolean {
@@ -25,22 +31,18 @@ object NFCUtil {
     }
 
     /**
-     * Creates an NDEF message with character data
+     * Creates an NDEF message with character ID and user token
      */
-    fun createCharacterNdefMessage(character: Character): NdefMessage {
-        // Serialize character to JSON
+    fun createCharacterNdefMessage(character: Character, userToken: String): NdefMessage {
+        // Serialize only character ID and user token to JSON
         val json = JSONObject().apply {
-            put("id", character.id)
-            put("name", character.name)
-            put("attack", character.attack)
-            put("defence", (character.defence))
-            put("luck", character.luck)
-            put("vitality", character.vitality)
+            put("characterId", character.id)
+            put("userToken", userToken)
         }
 
         val jsonString = json.toString()
 
-        // Create MIME record with character data
+        // Create MIME record with minimal character data
         val mimeRecord = NdefRecord.createMime(
             "application/com.example.arcane_gambit",
             jsonString.toByteArray(Charset.forName("UTF-8"))
@@ -100,8 +102,7 @@ object NFCUtil {
                     // Tag doesn't support NDEF
                     return false
                 }
-            }
-        } catch (e: Exception) {
+            }        } catch (e: Exception) {
             return false
         }
     }
@@ -110,8 +111,60 @@ object NFCUtil {
      * Writes character data to an NFC tag
      * Returns true if successful, false otherwise
      */
-    fun writeCharacterToTag(tag: Tag, character: Character): Boolean {
-        val ndefMessage = createCharacterNdefMessage(character)
+    fun writeCharacterToTag(tag: Tag, character: Character, userToken: String): Boolean {
+        val ndefMessage = createCharacterNdefMessage(character, userToken)
         return writeNdefMessage(tag, ndefMessage)
+    }    /**
+     * Writes character data to an NFC tag using SessionManager to get user token
+     * Returns true if successful, false otherwise
+     */
+    fun writeCharacterToTag(tag: Tag, character: Character, activity: ComponentActivity): Boolean {
+        val sessionManager = SessionManager(activity)
+        val userToken = sessionManager.getToken()
+        
+        if (userToken == null) {
+            return false // No user token available
+        }
+        
+        return writeCharacterToTag(tag, character, userToken)
+    }
+
+    /**
+     * Reads character data from an NFC tag
+     * Returns NfcCharacterData if successful, null otherwise
+     */
+    fun readCharacterFromTag(tag: Tag): NfcCharacterData? {
+        try {
+            val ndef = Ndef.get(tag) ?: return null
+            ndef.connect()
+            
+            val ndefMessage = ndef.ndefMessage
+            if (ndefMessage != null && ndefMessage.records.isNotEmpty()) {
+                // Look for our MIME record
+                for (record in ndefMessage.records) {
+                    val mimeType = String(record.type, Charset.forName("UTF-8"))
+                    if (mimeType == "application/com.example.arcane_gambit") {
+                        val payload = String(record.payload, Charset.forName("UTF-8"))
+                        
+                        try {
+                            val json = JSONObject(payload)
+                            val characterId = json.getString("characterId")
+                            val userToken = json.getString("userToken")
+                            
+                            return NfcCharacterData(characterId, userToken)
+                        } catch (e: Exception) {
+                            // Failed to parse JSON
+                            return null
+                        }
+                    }
+                }
+            }
+            
+            ndef.close()
+        } catch (e: Exception) {
+            // Error reading tag
+        }
+        
+        return null
     }
 }
