@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit
 
 object NetworkConfig {
     // Read from .env configuration
-    private const val SERVER_IP = "10.1.230.32"
+    private const val SERVER_IP = "192.168.137.1"
     private const val SERVER_PORT = "3001"
     private const val SERVER_PROTOCOL = "http"
     

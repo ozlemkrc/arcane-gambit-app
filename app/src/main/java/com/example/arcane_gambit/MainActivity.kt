@@ -301,8 +301,7 @@ fun ArcaneGambitApp(
                 onBack = { navController.popBackStack() }
             )
         }
-        
-        composable(
+          composable(
             route = "character_detail/{characterId}",
             arguments = listOf(navArgument("characterId") { type = NavType.StringType })
         ) { backStackEntry ->
@@ -320,6 +319,10 @@ fun ArcaneGambitApp(
 
                         // Navigate to the placeholder game screen with the character ID
                         navController.navigate("game_placeholder/${selectedCharacter.id}")
+                    },
+                    onQRJoinClick = { selectedCharacter ->
+                        // Navigate to QR code screen
+                        navController.navigate("qr_code/${selectedCharacter.id}")
                     }
                 )
             } else {
@@ -335,7 +338,7 @@ fun ArcaneGambitApp(
                     )
                 }
             }
-        }
+        }        
         composable(
             route = "character_page/{characterId}",
             arguments = listOf(navArgument("characterId") { type = NavType.StringType })
@@ -354,6 +357,10 @@ fun ArcaneGambitApp(
 
                         // Navigate to the placeholder game screen with the character ID
                         navController.navigate("game_placeholder/${selectedCharacter.id}")
+                    },
+                    onQRJoinClick = { selectedCharacter ->
+                        // Navigate to QR code screen
+                        navController.navigate("qr_code/${selectedCharacter.id}")
                     }
                 )
             } else {
@@ -401,6 +408,33 @@ fun ArcaneGambitApp(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {                    Text(
+                        text = "Character not found",
+                        color = Color.White,
+                        fontSize = 18.sp
+                    )
+                }            }
+        }
+
+        composable(
+            route = "qr_code/{characterId}",
+            arguments = listOf(navArgument("characterId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val characterId = backStackEntry.arguments?.getString("characterId") ?: ""
+            val characters by characterViewModel.characters.collectAsStateWithLifecycle()
+            val character = characters.find { it.id == characterId }
+
+            if (character != null) {
+                QRCodeScreen(
+                    character = character,
+                    onBackClick = { navController.popBackStack() }
+                )
+            } else {
+                // Handle the case where character is not found
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
                         text = "Character not found",
                         color = Color.White,
                         fontSize = 18.sp

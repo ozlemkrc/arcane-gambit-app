@@ -47,10 +47,13 @@ dependencies {
     
     // Material Icons
     implementation("androidx.compose.material:material-icons-extended:1.7.5")
-    
-    // Google Accompanist
+      // Google Accompanist
     implementation("com.google.accompanist:accompanist-pager:0.32.0")
     implementation("com.google.accompanist:accompanist-pager-indicators:0.32.0")
+
+    // QR Code Generation
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+    implementation("com.google.zxing:core:3.5.2")
 
     // Networking
     implementation("com.squareup.retrofit2:retrofit:2.9.0")

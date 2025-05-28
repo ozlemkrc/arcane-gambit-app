@@ -44,7 +44,8 @@ fun getCharacterImageResId(characterName: String): Int? {
 fun CharacterPageScreen(
     character: Character,
     onBackClick: () -> Unit,
-    onJoinGameClick: (Character) -> Unit
+    onJoinGameClick: (Character) -> Unit,
+    onQRJoinClick: (Character) -> Unit
 ) {
     // Get the image resource ID based on the character's avatar
     val imageResId = getCharacterImageResId(character.avatar)
@@ -146,26 +147,48 @@ fun CharacterPageScreen(
                         StatProgressBar("Vitality", character.vitality)
                     }
                 }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Join Game Button
-                Button(
-                    onClick = { onJoinGameClick(character) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF4CAF50)
-                    ),
-                    shape = RoundedCornerShape(12.dp)
+                Spacer(modifier = Modifier.height(8.dp))                // Join Game Buttons Section
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        text = "JOIN GAME WITH ${character.name.uppercase()}",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
+                    // QR Code Join Button
+                    Button(
+                        onClick = { onQRJoinClick(character) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF2196F3)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = " JOIN VIA QR",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+
+                    // NFC Join Button
+                    Button(
+                        onClick = { onJoinGameClick(character) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF4CAF50)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = "JOIN VIA NFC",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
                 }
             }
         },
