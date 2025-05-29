@@ -8,6 +8,8 @@ android {
     namespace = "com.example.arcane_gambit"
     compileSdk = 35
 
+    ndkVersion = "23.1.7779620"
+
     defaultConfig {
         applicationId = "com.example.arcane_gambit"
         minSdk = 24
@@ -16,6 +18,16 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+         ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+        }
+    }
+
+        packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
     }
 
     buildTypes {
@@ -73,6 +85,10 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.navigation.compose)
     
+    //Unity AR - this already includes ARCore
+    implementation(project(":unityLibrary"))
+    //implementation (files("libs/unity-classes.jar"))
+
     // Test dependencies
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

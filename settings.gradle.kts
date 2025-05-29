@@ -16,9 +16,14 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        flatDir{
+            dirs("unityLibrary/libs")
+        }
     }
 }
 
 rootProject.name = "arcane_gambit"
 include(":app")
+include(":unityLibrary")
+include(":unityLibrary:xrmanifest.androidlib")
  
