@@ -31,6 +31,7 @@ import com.example.arcane_gambit.ui.screens.*
 import com.example.arcane_gambit.ui.theme.Arcane_gambitTheme
 import com.example.arcane_gambit.utils.SessionManager
 import com.example.arcane_gambit.viewmodel.CharacterViewModel
+import com.example.arcane_gambit.data.network.NetworkConfig
 
 import java.util.UUID
 
@@ -45,6 +46,9 @@ class MainActivity : ComponentActivity() {
 
         // Initialize session manager
         sessionManager = SessionManager(this)
+        
+        // Initialize NetworkConfig with context
+        NetworkConfig.initialize(this)
 
         // Initialize NFC adapter
         nfcAdapter = NfcAdapter.getDefaultAdapter(this)

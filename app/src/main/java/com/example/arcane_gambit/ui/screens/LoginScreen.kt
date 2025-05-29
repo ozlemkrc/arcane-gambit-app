@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Login
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.draw.clip
@@ -18,23 +19,28 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import android.util.Log
 import com.example.arcane_gambit.utils.SessionManager
 import com.example.arcane_gambit.data.repository.AuthRepository
+import com.example.arcane_gambit.data.repository.SettingsRepository
+import com.example.arcane_gambit.ui.components.ServerSettingsDialog
+import com.example.arcane_gambit.ui.components.SettingsButton
 import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
     onRegisterClick: () -> Unit,
     onLoginSuccess: () -> Unit
-) {
-    var email by remember { mutableStateOf("") }
+) {    var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showSettingsDialog by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val sessionManager = remember { SessionManager(context) }
     val authRepository = remember { AuthRepository() }
+    val settingsRepository = remember { SettingsRepository(context) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -46,9 +52,24 @@ fun LoginScreen(
                 .background(
                     brush = Brush.verticalGradient(
                         colors = listOf(Color(0xFF1B1F3B), Color(0xFF4A4E69))
-                    )
-                )
+                    )                )
         ) {
+            // Settings button positioned at top-right
+            Box(modifier = Modifier.fillMaxSize()) {
+                IconButton(
+                    onClick = { showSettingsDialog = true },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(16.dp)
+                ) {
+                    Icon(
+                        Icons.Filled.Settings,
+                        contentDescription = "Server Settings",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -178,4 +199,17 @@ fun LoginScreen(
             }
         }
     }
-}
+    
+    // Settings Dialog
+    if (showSettingsDialog) {
+        ServerSettingsDialog(
+            onDismiss = { showSettingsDialog = false },            onSave = { config ->
+                Log.d("LoginScreen", "Saving server settings: ${config.ip}:${config.port}")
+                settingsRepository.setServerConfig(config)
+                showSettingsDialog = false
+                // Show confirmation message
+                errorMessage = "Server settings saved successfully"
+            }
+        )
+    }
+}}
